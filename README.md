@@ -46,6 +46,64 @@
 
 ## Данное задание я выполнил, используя terraform и ansible. Создание машины, установка microk8s и kubectl, а также создание подов, сервисов и ингресса выполнены автоматически после запуска terraform apply. В качестве ответа привожу вывод describe ingress и скриншоты. Все файлы в репозитории
 
+```
+ubuntu@server-kube:~$ micro describe ingress
+Name:             nginx-ingress
+Labels:           <none>
+Namespace:        default
+Address:
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host             Path  Backends
+  ----             ----  --------
+  nginx-ubunta.ru
+                   /      nginx-svc:80 (<none>)
+                   /api   mult-svc:80 (<none>)
+Annotations:       nginx.ingress.kubernetes.io/rewrite-target: /
+Events:            <none>
+ubuntu@server-kube:~$ micro get po -o wide
+NAME                            READY   STATUS              RESTARTS   AGE   IP       NODE          NOMINATED NODE   READINESS GATES
+nginx-deploy-7c79c4bf97-rznhs   0/1     ContainerCreating   0          72s   <none>   server-kube   <none>           <none>
+nginx-deploy-7c79c4bf97-7xftm   0/1     ContainerCreating   0          72s   <none>   server-kube   <none>           <none>
+nginx-deploy-7c79c4bf97-x52r6   0/1     ContainerCreating   0          72s   <none>   server-kube   <none>           <none>
+mult-deploy-8545445f7b-q9dmd    0/1     ContainerCreating   0          71s   <none>   server-kube   <none>           <none>
+ubuntu@server-kube:~$ htop
+ubuntu@server-kube:~$ micro get po -o wide
+NAME                            READY   STATUS    RESTARTS   AGE   IP            NODE          NOMINATED NODE   READINESS GATES
+nginx-deploy-7c79c4bf97-x52r6   1/1     Running   0          94s   10.1.55.196   server-kube   <none>           <none>
+nginx-deploy-7c79c4bf97-rznhs   1/1     Running   0          94s   10.1.55.194   server-kube   <none>           <none>
+nginx-deploy-7c79c4bf97-7xftm   1/1     Running   0          94s   10.1.55.195   server-kube   <none>           <none>
+mult-deploy-8545445f7b-q9dmd    1/1     Running   0          93s   10.1.55.199   server-kube   <none>           <none>
+ubuntu@server-kube:~$ micro describe ingress
+Name:             nginx-ingress
+Labels:           <none>
+Namespace:        default
+Address:          127.0.0.1
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host             Path  Backends
+  ----             ----  --------
+  nginx-ubunta.ru
+                   /      nginx-svc:80 (10.1.55.194:80,10.1.55.195:80,10.1.55.196:80)
+                   /api   mult-svc:80 (10.1.55.199:80)
+Annotations:       nginx.ingress.kubernetes.io/rewrite-target: /
+Events:
+  Type    Reason  Age              From                      Message
+  ----    ------  ----             ----                      -------
+  Normal  Sync    8s (x2 over 9s)  nginx-ingress-controller  Scheduled for sync
+
+```
+
+Screenshots     
+    
+![alt text](https://github.com/bonanzza-web/kuber-homeworks1.5/blob/main/img/1.png)
+
+![alt text](https://github.com/bonanzza-web/kuber-homeworks1.5/blob/main/img/2.png)
+
+![alt text](https://github.com/bonanzza-web/kuber-homeworks1.5/blob/main/img/hosts.png)
+
 ------
 
 ### Правила приема работы

@@ -1,0 +1,58 @@
+---
+- name: Install Microk8s ande kubectl on ubuntu
+  hosts: all
+  become: true
+  remote_user: ubuntu
+
+  tasks:
+  - name: Install microk8s
+    ansible.builtin.command: sudo snap install microk8s --classic --channel=1.28
+
+  - name: Create .kube
+    ansible.builtin.file:
+      path: /home/ubuntu/.kube
+      state: directory
+      mode: '0755'
+
+  - name: Install kubectl
+    ansible.builtin.shell: |
+      curl -LO https://dl.k8s.io/release/`curl -LS https://dl.k8s.io/release/stable.txt`/bin/linux/amd64/kubectl
+      chmod +x ./kubectl
+      sudo mv ./kubectl /usr/local/bin/kubectl
+    args:
+      executable: /bin/bash
+
+  - name: Join the group
+    ansible.builtin.user:
+      name: ubuntu
+      group: microk8s
+  - name: Chown kube
+    ansible.builtin.file:
+      path: /home/ubuntu/.kube
+      owner: ubuntu
+
+  - name: Copy files
+    ansible.builtin.copy:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+    with_items:
+      - { src: "kuber-files/docs/nginx-deploy.yaml", dest: "/home/ubuntu/nginx-deploy.yaml" }
+      - { src: "kuber-files/docs/nginx-svc.yaml", dest: "/home/ubuntu/nginx-svc.yaml" }
+      - { src: "kuber-files/docs/mult-deploy.yaml", dest: "/home/ubuntu/mult-deploy.yaml" }
+      - { src: "kuber-files/docs/mult-svc.yaml", dest: "/home/ubuntu/mult-svc.yaml" }
+      - { src: "kuber-files/docs/ingress.yaml", dest: "/home/ubuntu/ingress.yaml" }
+
+  - name: Apply deployment
+    ansible.builtin.shell: | 
+      microk8s enable ingress
+      microk8s kubectl apply -f /home/ubuntu/nginx-deploy.yaml
+      microk8s kubectl apply -f /home/ubuntu/nginx-svc.yaml
+      microk8s kubectl apply -f /home/ubuntu/mult-deploy.yaml
+      microk8s kubectl apply -f /home/ubuntu/mult-svc.yaml
+      microk8s kubectl apply -f /home/ubuntu/ingress.yaml
+
+  - name: Add alias
+    ansible.builtin.lineinfile:
+      path: /home/ubuntu/.bashrc
+      line: 'alias micro="microk8s kubectl"'
+      state: present
